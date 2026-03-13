@@ -1,0 +1,71 @@
+Ctrl + W → Close Current Tab
+Ctrl + D -> Select current word 
+Ctrl + L -> Select the line you are on
+Ctrl + X -> Cut line
+Ctrl + Z -> Undo 
+Ctrl + F2 -> Select all occurences of 1 word 
+Ctrl + backspace -> Delete word before cursor 
+Ctrl + Enter -> Add new line below 
+Ctrl + Shift + Enter -> Add a new line above 
+Ctrl + Home -> Jump to the start of the code 
+Ctrl + End -> Jump to the start of the code 
+Ctrl + Shift + Z -> Redo
+Ctrl + Alt + Up arow/ Down arrow -> Add cursor 
+Ctrl + Shift + K -> Delete a line
+LAlt + Arrow keys -> Move line up or down 
+Shift + LAlt + Ctrl + A -> comment selected block 
+Home -> start of the line 
+End -> end of a line 
+Shift + Arrow Keys -> Select lines      
+Esc -> deselect selected item 
+
+
+
+JSON FILE CODE FOR CURSOR MOVEMENT USING KEYBOARD
+{
+        "key": "alt+a",
+        "command": "cursorLeft"
+     
+    },
+    {
+        "key": "alt+s",
+        "command": "cursorDown"
+    },
+    {
+        "key": "alt+w",
+        "command": "cursorUp"
+    },
+    {
+        "key": "alt+d",
+        "command": "cursorRight"
+    },
+    {
+        "key": "alt+shift+a",
+        "command": "cursorWordLeft",
+        "when": "textInputFocus"
+    },
+    {
+        "key": "alt+shift+d",
+        "command": "cursorWordRight",
+        "when": "textInputFocus"
+    },
+    {
+        "key": "alt+shift+w",
+        "command": "cursorMove",
+        "args": {
+            "to": "up",
+            "by": "line",
+            "value": 5
+        },
+        "when": "editorTextFocus"
+    },
+    {
+        "key": "alt+shift+s",
+        "command": "cursorMove",
+        "args": {
+            "to": "down",
+            "by": "line",
+            "value": 5
+        },
+        "when": "editorTextFocus"
+    },

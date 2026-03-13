@@ -1,0 +1,72 @@
+.venv\Scripts\activate 
+(temp disable security features for scripts)
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process                        
+.projectvenv\Scripts\activate
+deactivate .venv
+python -m venv .venv (last param is the name)
+
+uvicorn main:app --reload (--reload optional, only used for debugging as it reloads the coad everytime it changes)
+no longer use this uvicorn command coz there is a fastapi cli?
+use "fastapi dev" instead 
+
+General commands to push updates 
+git add .
+git commit -m "stuff 05032026"
+git push
+
+When main updates:
+git checkout Luther
+git fetch origin
+git merge origin/main   
+
+
+GENERAL NOTES
+use of dots to navigate directory for imports
+    - eg one dot (.) is to navigate the current directory
+    - two dots (..) is to navigate one directory up 
+        - eg from .. import etc   
+
+
+FASTAPI NOTES
+CRUD framework (HTTPS methods) --> create (post), read(get), update(put/patch), delete(delete)
+put --> must indicate all fields in the schema
+patch --> only indicate the field you want to change 
+email validator lib can be used to validate emails for account creation
+security for passwords etc can be found in fastapi docs (built in libs)
+passlib[bcrypt] cahnged to pwd[argon2] can be found inside fastapi docs 
+use of APIrouter since the routes/paths are split away from the main file and the fastapi object is not there 
+    - use of prefix for cleaner code (optional)
+    - use of tags for better documentation grouping 
+    - make sure to add the router into the main file everytime a new router file is created
+PyJWT used instead of jose for token stuff 
+
+
+
+POSTGRESQL/DATABASE NOTES
+DATA TYPES --> Check postgresql docs to find out what each data type is used for
+Psycopg 
+    - postgres driver (used for when we need python to work with postgres)
+    - download psycopg3 instead of psycopg2
+relational database
+    - add a new column in a table with the unique key from a different table (foreign keys)
+    - allows for identification of data from a table to a specific row of data in another table 
+
+
+
+
+SQLMODEL/ORM NOTES
+write python code instead of using SQL to query and make tables in the database 
+using SQLmodel instead of SQLAlchemy
+
+
+
+LIBS THAT NEED TO BE DOWNLOADED 
+pwdlib[argon2] (pw hashing)
+SQLmodel (ORM)
+email validator  
+psycopg3
+PyJWT (token verification and generation)
+
+
+
+
