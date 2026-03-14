@@ -1,7 +1,4 @@
 .venv\Scripts\activate 
-(temp disable security features for scripts)
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process                        
-.projectvenv\Scripts\activate
 deactivate .venv
 python -m venv .venv (last param is the name)
 
@@ -21,7 +18,7 @@ use of dots to navigate directory for imports
     - eg one dot (.) is to navigate the current directory
     - two dots (..) is to navigate one directory up 
         - eg from .. import etc   
-youtube video time marker: 10:20:01
+youtube video time marker: 10:30:01
 
 
 
@@ -74,7 +71,7 @@ use of env variables to avoid hardcoding data/pw/urls etc
 
 
 
-LIBS THAT NEED TO BE DOWNLOADED 
+***LIBS THAT NEED TO BE DOWNLOADED (use requirements file)***
 pwdlib[argon2] (pw hashing)
 SQLmodel (ORM)
 email validator  
