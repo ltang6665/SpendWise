@@ -18,7 +18,7 @@ use of dots to navigate directory for imports
     - eg one dot (.) is to navigate the current directory
     - two dots (..) is to navigate one directory up 
         - eg from .. import etc   
-youtube video time marker: 10:30:01
+youtube video time marker: 12:18:01 (skipped to ubuntu deployment)
 
 
 
