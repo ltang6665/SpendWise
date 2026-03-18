@@ -1,6 +1,0 @@
-fastapi[all]
-pwdlib[argon2]
-sqlmodel
-psycopg[binary]
-PyJWT
-alembic
