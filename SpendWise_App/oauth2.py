@@ -3,7 +3,11 @@ from datetime import datetime, timedelta, timezone
 from fastapi.security import OAuth2PasswordBearer # for token expiration time
 from fastapi import Depends, status, HTTPException
 from . import schema, database, models
+from models import TokenData
 from .config import Settings
+from typing import Annotated
+import jwt
+from jwt.exceptions import InvalidTokenError
 
 
 oath2_scheme = OAuth2PasswordBearer(tokenUrl = """ the login route """) # the url for the login path (where the user will get the token from)
@@ -12,24 +16,55 @@ SECRET_KEY = Settings.SECRET_KEY
 ALGORITHM = Settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = Settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
-# create token with expiration timer  (use utcnow func)
-def create_access_token():
-    pass
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='login')
 
-def verifiy_access_token():
-    # should have a try except block coz there is a chance of an error (does not verify/match)
-    pass
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+        token_data = TokenData(username=username)
+    except InvalidTokenError:
+        raise credentials_exception
+    user = get_user(fake_users_db, username=token_data.username)
+    if user is None:
+        raise credentials_exception
+    return user
+
 
 # used as a dependency in the path operations that is protected
 # (eg the user must be signed in to access the path)
-def get_current_user():
-    pass
+async def get_current_active_user(current_user: Annotated[User, Depends(get_current_user)],):
+    if current_user.disabled:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
 
 
 
-from sqlalchemy.orm import Session
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='login')
+
+
+
+
+
+
+
 
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -40,7 +75,6 @@ def create_access_token(data: dict):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
     return encoded_jwt
-
 
 def verify_access_token(token: str, credentials_exception):
 

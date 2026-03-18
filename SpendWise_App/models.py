@@ -20,6 +20,12 @@ class UserDetails(UserCreate, table=True):
 class UserOut(UserCreate):
     user_id: int
 
+class Token(SQLModel):
+    access_token: str
+    token_type: str
+
+class TokenData(SQLModel):
+    username: str | None = None
 
 
 
