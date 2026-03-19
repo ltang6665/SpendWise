@@ -2,7 +2,7 @@
 # can create a .env file in the root directory for development purposes 
 # (initial setup of default values)
 
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # database settings

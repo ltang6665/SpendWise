@@ -6,6 +6,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 from SpendWise_App.config import Settings
 
+# settings = Settings() ???
 postgresql_url = f"postgresql://{Settings.DB_USERNAME}:{Settings.DB_PASSWORD}@{Settings.DB_HOST}:{Settings.DB_PORT}/{Settings.DB_NAME}"
 
 engine = create_engine(postgresql_url, echo=True)
