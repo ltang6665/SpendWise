@@ -1,4 +1,5 @@
 # code for models for database
+# login schema not neccessary just use OAuth2PasswordRequestForm
 
 from datetime import datetime, timezone
 from typing import Annotated, Optional
@@ -8,18 +9,28 @@ from sqlmodel import Field, SQLModel
 
 
 class UserBase(SQLModel):
-    email: EmailStr = Field(nullable=False, unique=True)
+    email: EmailStr = Field(unique=True)
+    active: bool = Field(default=False)
 
 class UserCreate(UserBase):
-    password: str = Field(nullable=False)
+    password: str  # plain password
 
-class UserDetails(UserCreate, table=True):
+class UserDetails(UserBase, table=True):
+    __tablename__ = "user_details" # type: ignore
     user_id: int | None = Field(default=None, primary_key=True)
     created_at: datetime | None = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False) 
+    hashed_password: str 
 
-class UserOut(UserCreate):
+class UserResponse(UserBase):
     user_id: int
 
+class Token(SQLModel):
+    access_token: str
+    token_type: str
+
+class TokenData(SQLModel):
+    email: str # | None = None #???
+    #user_type: str
 
 
 
