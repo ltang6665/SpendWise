@@ -1,12 +1,12 @@
 # code for token verification and creation 
+
 from sqlmodel import SQLModel, select, Session, or_
 from datetime import datetime, timedelta, timezone 
 from fastapi.security import OAuth2PasswordBearer # for token expiration time
 from fastapi import Depends, status, HTTPException
-from . import schema, database, models
-from models import *
-from database import SessionDependency
-from .config import Settings
+from .models import *
+from .database import SessionDependency
+from .config import settings
 from typing import Annotated
 import jwt
 from jwt.exceptions import InvalidTokenError
@@ -15,9 +15,9 @@ from pwdlib import PasswordHash
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl = """ the login route """) # the url for the login path (where the user will get the token from)
 
-SECRET_KEY = Settings.SECRET_KEY
-ALGORITHM = Settings.ALGORITHM
-ACCESS_TOKEN_EXPIRE_MINUTES = Settings.ACCESS_TOKEN_EXPIRE_MINUTES
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 password_hash = PasswordHash.recommended()
 

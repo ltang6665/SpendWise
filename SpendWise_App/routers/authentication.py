@@ -1,22 +1,21 @@
 # code for the login function/path
+from datetime import timedelta
 from typing import Annotated
 from fastapi import Depends, HTTPException, status
 from fastapi import APIRouter
 from fastapi.security import OAuth2PasswordRequestForm
-from .. import models, database
-from models import Token
-from database import SessionDependency
-from oauth2 import *
+from ..models import Token
+from ..database import SessionDependency
+from ..oauth2 import * 
 
-router = APIRouter(tags = ["Authentication"])
-
-
-@router.post("/login")
-def login():
-    pass
+router = APIRouter(
+    prefix = "/login",
+    tags = ["Authentication"]
+)
 
 
-@router.post("/token")
+# route for logging in
+@router.post("/")
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: SessionDependency

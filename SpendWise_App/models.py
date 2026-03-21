@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Annotated, Optional
 
 from pydantic import EmailStr
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, SQLModel, text
 
 
 class UserBase(SQLModel):
@@ -18,7 +18,10 @@ class UserCreate(UserBase):
 class UserDetails(UserBase, table=True):
     __tablename__ = "user_details" # type: ignore
     user_id: int | None = Field(default=None, primary_key=True)
-    created_at: datetime | None = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=False) 
+    created_at: datetime = Field(
+        default=None,
+        sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")}
+    )
     hashed_password: str 
 
 class UserResponse(UserBase):
