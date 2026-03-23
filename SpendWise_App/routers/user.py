@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Response, status, HTTPException, Depends, APIRouter
 from sqlmodel import Session
+
+from ..utils import get_password_hash
 from ..models import *
 from ..oauth2 import *
 from ..database import *
@@ -9,7 +11,7 @@ router = APIRouter(
     tags=['Users']
 )
 
-@router.post("/", status_code=status.HTTP_201_CREATED, response_model=UserDetails)
+@router.post("/register", status_code=status.HTTP_201_CREATED, response_model=UserDetails)
 def register_user(user: UserCreate, db: SessionDependency):
 
     # hash the password - user.password

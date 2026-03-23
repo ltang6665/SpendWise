@@ -10,7 +10,7 @@ from sqlmodel import Field, SQLModel, text
 
 class UserBase(SQLModel):
     email: EmailStr = Field(unique=True)
-    active: bool = Field(default=False)
+    active: bool | None = Field(default=False) # optional?
 
 class UserCreate(UserBase):
     password: str  # plain password

@@ -7,6 +7,7 @@ from fastapi import Depends, status, HTTPException
 from .models import *
 from .database import SessionDependency
 from .config import settings
+from .utils import DUMMY_HASH, verify_password
 from typing import Annotated
 import jwt
 from jwt.exceptions import InvalidTokenError
@@ -18,16 +19,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl = """ the login route """) # the u
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
-
-password_hash = PasswordHash.recommended()
-
-DUMMY_HASH = password_hash.hash("dummypassword")
-
-def get_password_hash(password):
-    return password_hash.hash(password)
-
-def verify_password(plain_password, hashed_password):
-    return password_hash.verify(plain_password, hashed_password)
 
 def get_user(db: Session, email: str):
     user = db.exec(
@@ -72,7 +63,6 @@ async def get_current_user(db: SessionDependency, token: Annotated[str, Depends(
     if user is None:
         raise credentials_exception
     return user
-
 
 # used as a dependency in the path operations that is protected
 # (eg the user must be signed in to access the path)
