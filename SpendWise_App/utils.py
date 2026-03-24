@@ -18,5 +18,6 @@ def verify_password(plain_password, hashed_password):
 def CPIcalc():
     pass
 
-
+def ImportPastExpenditures():
+    pass
 

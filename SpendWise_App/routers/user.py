@@ -11,18 +11,28 @@ router = APIRouter(
     tags=['Users']
 )
 
-@router.post("/register", status_code=status.HTTP_201_CREATED, response_model=UserDetails)
+@router.post("/register", status_code=status.HTTP_201_CREATED, response_model=UserResponse)
 def register_user(user: UserCreate, db: SessionDependency):
+    existing_user = get_user(db, email=user.email)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
 
-    # hash the password - user.password
-    hashed_password = get_password_hash(user.password)
-    user.password = hashed_password
+    hashed_pw = get_password_hash(user.password)
 
-    new_user = UserDetails(**user.dict())
+    new_user = UserDetails(
+        email=user.email,
+        HashedPassword=hashed_pw,
+        UserType="user",
+        active=True
+    )
+
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
-    return new_user
+    return new_user # currently only id returns due to response model
 
-
+#delete account 
+@router.delete("/delete")
+def delete_user_account():
+    pass
