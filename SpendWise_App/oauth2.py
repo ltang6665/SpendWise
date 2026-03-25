@@ -1,6 +1,6 @@
 # code for token verification and creation 
 
-from sqlmodel import SQLModel, select, Session, or_
+from sqlmodel import select, Session, or_
 from datetime import datetime, timedelta, timezone 
 from fastapi.security import OAuth2PasswordBearer # for token expiration time
 from fastapi import Depends, status, HTTPException
@@ -10,11 +10,10 @@ from .config import settings
 from .utils import DUMMY_HASH, verify_password
 from typing import Annotated
 import jwt
-from jwt.exceptions import InvalidTokenError
-from pwdlib import PasswordHash
+from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl = """ the login route """) # the url for the login path (where the user will get the token from)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl = 'login') # the url for the login path (where the user will get the token from)
 
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
@@ -31,19 +30,29 @@ def authenticate_user(db: Session, email: str, password: str):
     if not user:
         verify_password(password, DUMMY_HASH)
         return False
-    if not verify_password(password, user.hashed_password):
+    if not verify_password(password, user.HashedPassword):
         return False
     return user
 
+# token_data: TokenData, token_data.model_dump()
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    # converts to dictionary 
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15) #default?
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+# token_data: TokenData, token_data.model_dump()
+def create_refresh_token(data: dict):
+    # Refresh tokens usually last much longer, e.g., 7 days
+    expire = datetime.now(timezone.utc) + timedelta(days=7)
+    to_encode = data.copy()
+    to_encode.update({"exp": expire}) # 'type' to distinguish them (, "type": "refresh")
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 async def get_current_user(db: SessionDependency, token: Annotated[str, Depends(oauth2_scheme)]):
     credentials_exception = HTTPException(
@@ -51,15 +60,20 @@ async def get_current_user(db: SessionDependency, token: Annotated[str, Depends(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email = payload.get("sub")
         if email is None:
             raise credentials_exception
-        token_data = TokenData(email=email)
+        token_data = TokenData(sub=email) 
+    except ExpiredSignatureError:
+        # Explicitly tell the frontend to refresh!
+        raise HTTPException(status_code=401, detail="Token expired")
     except InvalidTokenError:
         raise credentials_exception
-    user = get_user(db, email=token_data.email)
+
+    user = get_user(db=db, email=token_data.sub)
     if user is None:
         raise credentials_exception
     return user
@@ -67,9 +81,24 @@ async def get_current_user(db: SessionDependency, token: Annotated[str, Depends(
 # used as a dependency in the path operations that is protected
 # (eg the user must be signed in to access the path)
 async def get_current_active_user(current_user: Annotated[UserDetails, Depends(get_current_user)],):
-    if current_user.active:
-        raise HTTPException(status_code=400, detail="Inactive user")
+    if not current_user.active:
+        raise HTTPException(status_code=400, detail="Banned User")
+    """elif current_user.RefreshToken == None:
+        raise HTTPException(status_code=400, detail="No Refresh Token")"""
+    # added to the refresh route instead to avoid error if one 
+    # is already logged out but presses it again
     return current_user
+
+# Then build role-specific dependencies on top
+async def get_current_admin(current_user: Annotated[UserDetails, Depends(get_current_user)]):
+    if current_user.UserType != "admin":
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    return current_user
+
+# for logout to prevent token renewal?
+async def make_user_inactive():
+    pass
+
 
 
 

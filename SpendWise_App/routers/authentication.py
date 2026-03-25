@@ -1,21 +1,20 @@
 # code for the login function/path
 from datetime import timedelta
 from typing import Annotated
-from fastapi import Depends, HTTPException, status
+from fastapi import Body, Depends, HTTPException, status
 from fastapi import APIRouter
 from fastapi.security import OAuth2PasswordRequestForm
-from ..models import Token
+from ..models import Token, RefreshTokenDB
 from ..database import SessionDependency
 from ..oauth2 import * 
 
 router = APIRouter(
-    prefix = "/login",
     tags = ["Authentication"]
 )
 
 
 # route for logging in
-@router.post("/")
+@router.post("/login")
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: SessionDependency
@@ -28,7 +27,74 @@ async def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
+
+    access_token = create_access_token(data={"sub": user.email}, expires_delta=access_token_expires)
+    refresh_token = create_refresh_token(data={"sub": user.email})
+
+    db_refresh_token = RefreshTokenDB(RefreshToken=refresh_token)
+    db.add(db_refresh_token)
+    db.commit()
+
+    return Token(
+        AccessToken=access_token, 
+        RefreshToken=refresh_token, 
+        TokenType="bearer",
+        UserType=user.UserType
     )
-    return Token(access_token=access_token, token_type="bearer")
+
+#logout -> must change to inactive user? 
+@router.post("/logout")
+async def logout(
+    current_user: Annotated[UserDetails, Depends(get_current_active_user)], 
+    db: SessionDependency
+):
+    #sqlmodel auto tracks and will update instead of adding a new instance?
+    current_user.RefreshToken = None
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    
+    return {"detail": "Successfully logged out"}
+
+# called when access expires 
+# depends get_curret_active_user fails
+@router.post("/refresh")
+async def refresh_access_token(
+    # We expect the frontend to send the refresh_token in the body
+    refresh_token: Annotated[str, Body()], 
+    db: SessionDependency
+):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate refresh token",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+    except ExpiredSignatureError:
+        # Explicitly tell the frontend to refresh!
+        raise HTTPException(status_code=401, detail="Refresh Token expired")
+    except InvalidTokenError:
+        raise credentials_exception
+
+    user = get_user(db, email=email)
+    if user is None:
+        raise credentials_exception
+
+    # 3. THE CRITICAL CHECK: Does the token match the DB?
+    # If the user logged out, user.RefreshToken will be None
+    if user.RefreshToken != refresh_token:
+        raise credentials_exception
+
+    # 4. Issue a brand new Access Token
+    token_data = TokenData(sub=user.email, UserType=user.UserType)
+    new_access_token = create_access_token(data=token_data.model_dump())
+
+    return {
+        "AccessToken": new_access_token,
+        "TokenType": "bearer"
+    }
