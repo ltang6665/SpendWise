@@ -66,7 +66,7 @@ def calculate_forecast(
 def calculate_realtime_savings(
     monthly_income: float,
     current_total_spending: float,
-    reference_date: date = None
+    reference_date: date | None = None # optional or nah?
 ) -> float:
     """
     Calculates pro-rated real-time savings for the current month.

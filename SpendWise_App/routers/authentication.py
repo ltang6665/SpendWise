@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import Body, Depends, HTTPException, status
 from fastapi import APIRouter
 from fastapi.security import OAuth2PasswordRequestForm
-from ..models import Token, RefreshTokenDB
+from ..models import Token
 from ..database import SessionDependency
 from ..oauth2 import * 
 
@@ -31,8 +31,19 @@ async def login_for_access_token(
     access_token = create_access_token(data={"sub": user.email}, expires_delta=access_token_expires)
     refresh_token = create_refresh_token(data={"sub": user.email})
 
-    db_refresh_token = RefreshTokenDB(RefreshToken=refresh_token)
-    db.add(db_refresh_token)
+    statement = select(UserDetails).where(UserDetails.email == user.email)
+    results = db.exec(statement)
+    user_db = results.first()
+
+    if not user_db:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User details not found"
+        )
+        
+    user_db.RefreshToken = refresh_token
+
+    db.add(user_db)
     db.commit()
 
     return Token(
@@ -70,18 +81,9 @@ async def refresh_access_token(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    try:
-        payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-    except ExpiredSignatureError:
-        # Explicitly tell the frontend to refresh!
-        raise HTTPException(status_code=401, detail="Refresh Token expired")
-    except InvalidTokenError:
-        raise credentials_exception
+    token_data = verify_token(refresh_token, credentials_exception=credentials_exception, SECRET_KEY=SECRET_KEY, ALGORITHM=ALGORITHM)
 
-    user = get_user(db, email=email)
+    user = get_user(db, email=token_data.sub)
     if user is None:
         raise credentials_exception
 

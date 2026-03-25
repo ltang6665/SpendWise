@@ -7,7 +7,7 @@ from fastapi import Depends, status, HTTPException
 from .models import *
 from .database import SessionDependency
 from .config import settings
-from .utils import DUMMY_HASH, verify_password
+from .utils import DUMMY_HASH, verify_password, verify_token
 from typing import Annotated
 import jwt
 from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
@@ -61,17 +61,7 @@ async def get_current_user(db: SessionDependency, token: Annotated[str, Depends(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-        token_data = TokenData(sub=email) 
-    except ExpiredSignatureError:
-        # Explicitly tell the frontend to refresh!
-        raise HTTPException(status_code=401, detail="Token expired")
-    except InvalidTokenError:
-        raise credentials_exception
+    token_data = verify_token(token, credentials_exception=credentials_exception, SECRET_KEY=SECRET_KEY, ALGORITHM=ALGORITHM)
 
     user = get_user(db=db, email=token_data.sub)
     if user is None:
