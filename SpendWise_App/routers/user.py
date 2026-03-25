@@ -11,6 +11,7 @@ router = APIRouter(
     tags=['Users']
 )
 
+# do not auto login? just register and relogin
 @router.post("/register", status_code=status.HTTP_201_CREATED, response_model=UserResponse)
 def register_user(user: UserCreate, db: SessionDependency):
     existing_user = get_user(db, email=user.email)
