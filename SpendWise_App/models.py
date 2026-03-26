@@ -52,7 +52,7 @@ class TokenData(SQLModel):
 class UserExpenses(SQLModel): 
     type: str 
     ItemName: str 
-    AmountSpent: int 
+    AmountSpent: float 
     DatePurchased: date
     note: str | None = None
 
