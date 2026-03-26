@@ -8,7 +8,6 @@ from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, relationship
-
 from .database import Base, get_db
 
 
@@ -253,11 +252,11 @@ def save_settings(user_id: int, payload: SettingsPayload, db: Session = Depends(
 
 
 
-@router.get("/{user_id}/previous-expenses", response_model=List[PreviousExpenseResponse])
+"""@router.get("/{user_id}/previous-expenses", response_model=List[PreviousExpenseResponse])
 def get_previous_expenses(user_id: int, db: Session = Depends(get_db)):
-    """
+
     Load previous expenses table.
-    """
+
     settings = get_settings_by_user_id(db, user_id)
     if not settings:
         settings = create_default_settings(db, user_id)
@@ -268,7 +267,7 @@ def get_previous_expenses(user_id: int, db: Session = Depends(get_db)):
         .order_by(PreviousExpense.month.desc())
         .all()
     )
-    return rows
+    return rows"""
 
 
 

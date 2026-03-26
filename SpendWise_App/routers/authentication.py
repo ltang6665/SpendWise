@@ -93,7 +93,7 @@ async def refresh_access_token(
         raise credentials_exception
 
     # 4. Issue a brand new Access Token
-    token_data = TokenData(sub=user.email, UserType=user.UserType)
+    token_data = TokenData(sub=user.email) #, UserType=user.UserType
     new_access_token = create_access_token(data=token_data.model_dump())
 
     return {
