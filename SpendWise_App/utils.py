@@ -23,7 +23,7 @@ def verify_password(plain_password, hashed_password):
 def verify_token(refresh_token:str, credentials_exception, SECRET_KEY, ALGORITHM):
     try:
         payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
+        email: str = payload.get("sub") # type: ignore
         if email is None:
             raise credentials_exception
         token_data = TokenData(sub=email)
