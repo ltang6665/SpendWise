@@ -1,9 +1,10 @@
-# from fastapi import APIRouter, Depends, HTTPException, status
-# from sqlmodel import select
+# from fastapi import APIRouter, Depends, HTTPException, status, Query
+# from sqlmodel import select, func
 # from ..models import UserExpenses, ExpensesDB, UserDetails
 # from ..database import SessionDependency
 # from ..oauth2 import get_current_active_user
 # from typing import Annotated
+# from datetime import date, timedelta
 
 # router = APIRouter(prefix="/expenses", tags=["Expenses"])
 
@@ -43,3 +44,30 @@
 #     db.delete(expense)
 #     db.commit()
 #     return {"success": True}
+
+# # Time filter helper
+# def get_date_filter(period: str) -> date | None:
+#     today = date.today()
+#     if period == "past_year":
+#         return today.replace(year=today.year - 1)
+#     elif period == "6_months":
+#         return today - timedelta(days=182)
+#     elif period == "this_month":
+#         return today.replace(day=1)
+#     return None  # "all_time"
+
+# # Category breakdown endpoint
+# @router.get("/categories", response_model=list[ExpensesDB])
+# def get_expenses_by_category(
+#     db: SessionDependency,
+#     current_user: CurrentUser,
+#     period: str = Query(default="all_time")  # all_time | past_year | 6_months | this_month
+# ):
+#     since = get_date_filter(period)
+#     query = select(ExpensesDB).where(ExpensesDB.user_id == current_user.id)
+    
+#     if since:
+#         query = query.where(ExpensesDB.DatePurchased >= since)
+    
+#     query = query.order_by(ExpensesDB.category, ExpensesDB.DatePurchased.desc())
+#     return db.exec(query).all()
