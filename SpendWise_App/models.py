@@ -3,9 +3,9 @@
 
 from datetime import datetime, timezone, date
 import re
-from typing import Annotated
+from typing import Annotated, Optional
 from pydantic import EmailStr, field_validator
-from sqlmodel import Field, SQLModel, text, AutoString
+from sqlmodel import Field, Relationship, SQLModel, text, AutoString
 from .utils import TransportationTypes
 
 
@@ -29,7 +29,7 @@ class UserDetails(UserBase, RefreshToken, table=True):
         sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")}
     )
     HashedPassword: str = Field(index=True)
-    UserType: str = Field(default="user")
+    UserType: str | None = Field(default="user")
 
 class UserResponse(UserBase):
     id: int
@@ -128,13 +128,13 @@ class UserSettings(SQLModel):
     AlertThreshold: int = Field(default=80, ge=1, le=100)
 
 class UserSettingsDB(UserSettings, table=True):
-    __tablename__ = "user_settings"
+    __tablename__ = "user_settings" # type: ignore
     id: int | None = Field(default=None, primary_key=True)
     CreatedAt: datetime = Field(
         default=None,
         sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")}
     )
-    PreviousExpenses: List["PreviousExpense"] = Relationship(
+    PreviousExpenses: list["PreviousExpense"] = Relationship(
         back_populates="Settings", 
         sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
@@ -156,9 +156,9 @@ class PreviousExpense(SQLModel):
         return value
 
 class AllPreviousExpenses(SQLModel):
-    AllExpensesRows: list[PreviousExpense]
+    AllExpenseRows: list[PreviousExpense]
 
-    @field_validator("AllExpensesRows")
+    @field_validator("AllExpenseRows")
     @classmethod
     def validate_unique_months(cls, value):
         months = [e.month for e in value]
@@ -167,8 +167,7 @@ class AllPreviousExpenses(SQLModel):
         return value
     
 class PreviousExpenseDB(PreviousExpense, table=True):
-    __tablename__ = "previous_expenses"
-
+    __tablename__ = "previous_expenses" # type: ignore
     id: int | None = Field(default=None, primary_key=True)
     CreatedAt: datetime = Field(
         default=None,
@@ -189,7 +188,7 @@ class FullSettingsResponse(UserSettings):
     UserId: int
     CreatedAt: datetime
     UpdatedAt: datetime
-    PreviousExpenses: List[PreviousExpenseBase] = []
+    PreviousExpenses: list[PreviousExpense] = []
 
 
 

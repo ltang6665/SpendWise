@@ -6,7 +6,10 @@ from ..oauth2 import get_current_active_user
 from typing import Annotated
 from datetime import date, timedelta
 
-router = APIRouter(prefix="/expenses", tags=["Expenses"])
+router = APIRouter(
+    prefix="/expenses", 
+    tags=["Expenses"]
+)
 
 CurrentUser = Annotated[UserDetails, Depends(get_current_active_user)]
 

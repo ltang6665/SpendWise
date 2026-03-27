@@ -49,3 +49,27 @@ app.include_router(settings.router)
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+
+from .models import UserDetails
+from .utils import *
+from .database import SessionDependency
+
+@app.post("/debuguser")
+async def generate_random_user(db: SessionDependency):
+    username = "spendwise@gmail.com"
+    unhashed_pw = "password123"
+    hashed_password = get_password_hash(unhashed_pw)
+    user_type = "user"
+    master_refresh = "master"
+    master_access = "master"
+
+    user = UserDetails(RefreshToken=master_refresh, 
+                       email=username, 
+                       UserType=user_type, 
+                       HashedPassword=hashed_password
+                        )
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
