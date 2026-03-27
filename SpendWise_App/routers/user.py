@@ -1,6 +1,5 @@
 from fastapi import FastAPI, Response, status, HTTPException, Depends, APIRouter
 from sqlmodel import Session
-
 from ..utils import get_password_hash
 from ..models import *
 from ..oauth2 import *

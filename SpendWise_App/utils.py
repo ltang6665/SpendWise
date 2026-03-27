@@ -3,6 +3,7 @@
     # verification of pw
 # so that imports and code is not repeated in multiple files/main file 
 
+from enum import Enum
 from fastapi import HTTPException
 import jwt
 from jwt import ExpiredSignatureError, InvalidTokenError
@@ -34,3 +35,8 @@ def verify_token(refresh_token:str, credentials_exception, SECRET_KEY, ALGORITHM
         raise credentials_exception
 
     return token_data
+
+# ENUMS
+class TransportationTypes(str, Enum):
+    public = "public"
+    private = "private"

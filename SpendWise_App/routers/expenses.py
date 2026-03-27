@@ -54,7 +54,8 @@ def get_date_filter(period: str) -> date | None:
         return today - timedelta(days=182)
     elif period == "this_month":
         return today.replace(day=1)
-    return None  "all_time"
+    else:
+        return "all_time"
 
 # Category breakdown endpoint
 @router.get("/categories", response_model=list[ExpensesDB])

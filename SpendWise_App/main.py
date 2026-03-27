@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from typing import Optional # used to make a field optional in the schema
 from random import randrange # used to generate a random in
 import psycopg # psycopg instead of psycog3 and do not need to import RealDictCursor?
-from .routers import authentication, expenses # import the other routers when files are up 
+from .routers import authentication, expenses, settings # import the other routers when files are up 
 from contextlib import asynccontextmanager #lifespan
 from . import database
 
@@ -41,7 +41,8 @@ app.add_middleware(
 
 # routers 
 app.include_router(authentication.router)
-#app.include_router(expenses.router)
+app.include_router(expenses.router)
+app.include_router(settings.router)
 
 
 # test function
