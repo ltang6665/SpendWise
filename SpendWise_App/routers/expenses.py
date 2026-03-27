@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlmodel import select, func
-from ..models import UserExpenses, ExpensesDB, UserDetails
+from ..models import UserExpenses, ExpensesDB, UserDetails, UserResponse
 from ..database import SessionDependency
 from ..oauth2 import get_current_active_user
 from typing import Annotated
@@ -11,9 +11,9 @@ router = APIRouter(
     tags=["Expenses"]
 )
 
-CurrentUser = Annotated[UserDetails, Depends(get_current_active_user)]
+CurrentUser = Annotated[UserResponse, Depends(get_current_active_user)]
 
-@router.post("/", response_model=ExpensesDB, status_code=status.HTTP_201_CREATED)
+@router.post("/add", response_model=ExpensesDB, status_code=status.HTTP_201_CREATED)
 def add_expense(
     expense: UserExpenses,
     db: SessionDependency,

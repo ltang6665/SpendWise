@@ -29,8 +29,9 @@ class UserDetails(UserBase, RefreshToken, table=True):
         sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")}
     )
     HashedPassword: str = Field(index=True)
-    UserType: str | None = Field(default="user")
+    UserType: str = Field(default="user")
 
+# Annotated[UserResponse, Depends(get_current_active_user)] avoid returning iportant data --> use id to fetch from db?
 class UserResponse(UserBase):
     id: int
 
@@ -40,7 +41,7 @@ class Token(RefreshToken):
     UserType: str
 
 class TokenData(SQLModel):
-    sub: str # | None = None #??? univesal naming convention of the subject eg the email
+    sub: str # univesal naming convention of the subject eg the email
 
 
 """ class RefreshTokenDB(RefreshToken):
@@ -52,7 +53,7 @@ class TokenData(SQLModel):
     )
  """
 class UserExpenses(SQLModel): 
-    type: str 
+    type: str # change to enum
     ItemName: str 
     AmountSpent: float 
     DatePurchased: date
