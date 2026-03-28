@@ -7,6 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from ..models import Token
 from ..database import SessionDependency
 from ..oauth2 import * 
+from ..schema import TokenData
 
 router = APIRouter(
     tags = ["Authentication"]

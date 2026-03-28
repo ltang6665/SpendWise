@@ -6,6 +6,9 @@
 from pydantic import BaseModel
 from datetime import date
 
+class TokenData(BaseModel):
+    sub: str
+
 class ExpenseItem(BaseModel):
     id: int
     ItemName: str

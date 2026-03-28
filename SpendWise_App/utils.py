@@ -7,8 +7,9 @@ from fastapi import HTTPException
 import jwt
 from jwt import ExpiredSignatureError, InvalidTokenError
 from pwdlib import PasswordHash
-from .models import TokenData
+from .schema import TokenData
 from datetime import date, timedelta
+from enum import Enum
 
 
 password_hash = PasswordHash.recommended()

@@ -1,9 +1,6 @@
 __pycache__/
 *.pyc
 .venv/
-<<<<<<< HEAD
 Spendwise/
-=======
->>>>>>> 40a895a61b4de49d31e0f736d07a8bd33445cc7e
 .projectvenv/
 tempCodeRunnerFile.py

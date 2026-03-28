@@ -41,9 +41,6 @@ class Token(RefreshToken):
     TokenType: str
     UserType: str
 
-class TokenData(SQLModel):
-    sub: str # univesal naming convention of the subject eg the email
-
 
 """ class RefreshTokenDB(RefreshToken):
     __tablename__ = "refresh_tokens" # type: ignore
@@ -64,6 +61,7 @@ class ExpensesDB(UserExpenses, table=True):
     __tablename__ = "user_expenses" # type: ignore
     # user_id relationship column?
     id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key = "user_details.id")
     CreatedAt: datetime = Field(
         default=None,
         sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")}

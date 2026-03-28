@@ -1,11 +1,12 @@
 # code for database related stuff (connection etc?) (did not include the tables)
 
-from os import uname
+#from os import uname
 from typing import Annotated
 from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 
-from SpendWise_App.models import UserDetails
+# from SpendWise_App.models import UserDetails
+from .models import UserDetails
 from .utils import get_password_hash
 from .config import settings
 
