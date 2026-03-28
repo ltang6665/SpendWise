@@ -253,6 +253,7 @@ class FullSettingsResponse(UserSettingsRead):
 
 class QuickSetupPayload(SQLModel):
     MonthlyIncome: float
+    EmailOrPhone: Optional[str] = None
 
 
 

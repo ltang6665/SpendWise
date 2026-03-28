@@ -191,6 +191,9 @@ def quick_setup(user_id: int, payload: QuickSetupPayload, db: SessionDependency)
         settings = create_default_settings(db, user_id)
 
     settings.MonthlyIncome = payload.MonthlyIncome
+    if payload.EmailOrPhone is not None:
+        settings.EmailOrPhone = payload.EmailOrPhone
+
     settings.SetupMode = "quick"
     settings.SetupCompleted = True
     settings.UpdatedAt = datetime.utcnow()
