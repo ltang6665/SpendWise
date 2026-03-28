@@ -36,6 +36,15 @@ def verify_token(refresh_token:str, credentials_exception, SECRET_KEY, ALGORITHM
 
     return token_data
 
+# ENUMS
+class TransportationType(str, Enum):
+    public = "public"
+    bike = "bike"
+    electric = "electric"
+    normal= "normal"
+
+    # private = "private"
+
 # Time filter helper
 def get_date_filter(period: str) -> date | None:
     today = date.today()
