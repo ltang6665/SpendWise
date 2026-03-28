@@ -37,6 +37,10 @@ def verify_token(refresh_token:str, credentials_exception, SECRET_KEY, ALGORITHM
     return token_data
 
 # ENUMS
-class TransportationTypes(str, Enum):
+class TransportationType(str, Enum):
     public = "public"
-    private = "private"
+    bike = "bike"
+    electric = "electric"
+    normal= "normal"
+
+    # private = "private"

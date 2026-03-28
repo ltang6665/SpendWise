@@ -2,11 +2,12 @@
 # login schema not neccessary just use OAuth2PasswordRequestForm
 
 from datetime import datetime, timezone, date
+from email.policy import default
 import re
 from typing import Annotated, Optional
 from pydantic import EmailStr, field_validator
 from sqlmodel import Field, Relationship, SQLModel, text, AutoString
-from .utils import TransportationTypes
+from .utils import TransportationType as TransportationTypeEnum
 
 
 class UserBase(SQLModel):
@@ -117,28 +118,87 @@ class BudgetDB(UserBudget):
         sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")}
     )
 
-class UserSettings(SQLModel):
-    Email: EmailStr
+class UserSettingsBase(SQLModel):
+    EmailOrPhone: Optional[str] = None
     MonthlyIncome: float = Field(default=0.0, ge=0)
     HouseholdSize: int = Field(default=1, ge=1)
-    TransportationType: TransportationTypes = TransportationTypes.public
+    TransportationType: TransportationTypeEnum = Field(default=TransportationTypeEnum.public)
     MonthlyTransportSpending: float = Field(default=0.0, ge=0)
     MonthlyUtilityBill: float = Field(default=0.0, ge=0)
     PriceIncreaseAlerts: bool = True
     BudgetThresholdAlerts: bool = True
     AlertThreshold: int = Field(default=80, ge=1, le=100)
 
-class UserSettingsDB(UserSettings, table=True):
-    __tablename__ = "user_settings" # type: ignore
+# class UserSettingsBase(SQLModel):
+#     UserId: int = Field(foreign_key="user_details.id", unique=True, index=True)
+#     EmailOrPhone: Optional[str] = None
+#     MonthlyIncome: float = Field(default=0.0, ge=0)
+#     HouseholdSize: int = Field(default=1, ge=1)
+#     TransportationType: TransportationTypeEnum = Field(default(TransportationTypeEnum.public))
+#     MonthlyTransportSpending: float = Field(default=0.0, ge=0)
+#     MonthlyUtilityBill: float = Field(default=0.0, ge=0)
+#     PriceIncreaseAlerts: bool = True
+#     BudgetThresholdAlerts: bool = True
+#     AlertThreshold: int = Field(default=80, ge=1, le=100)
+
+class UserSettingsDB(UserSettingsBase, table=True):
+    __tablename__ = "user_settings"  # type: ignore
+
     id: int | None = Field(default=None, primary_key=True)
+
+    # link to user
+    UserId: int = Field(
+        foreign_key="user_details.id",
+        unique=True,
+        index=True
+    )
+
     CreatedAt: datetime = Field(
         default=None,
         sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")}
     )
-    PreviousExpenses: list["PreviousExpense"] = Relationship(
-        back_populates="Settings", 
+
+    UpdatedAt: datetime | None = None
+
+    PreviousExpenses: list["PreviousExpenseDB"] = Relationship(
+        back_populates="Settings",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
+
+    SetupMode: str = Field(default="none")  
+    # "none" | "quick" | "detailed" | "skipped"
+
+    SetupCompleted: bool = Field(default=False)
+    
+
+
+class UserSettingsRead(SQLModel):
+    id: int
+    UserId: int
+    EmailOrPhone: Optional[str]
+    MonthlyIncome: float
+    HouseholdSize: int
+    TransportationType: TransportationTypeEnum
+    MonthlyTransportSpending: float
+    MonthlyUtilityBill: float
+    PriceIncreaseAlerts: bool
+    BudgetThresholdAlerts: bool
+    AlertThreshold: int
+    SetupMode: str
+    SetupCompleted: bool
+    CreatedAt: datetime
+    UpdatedAt: datetime | None = None
+
+class UserSettingsUpdate(SQLModel):
+    EmailOrPhone: Optional[str] = None
+    MonthlyIncome: Optional[float] = Field(default=None, ge=0)
+    HouseholdSize: Optional[int] = Field(default=None, ge=1)
+    TransportationType: Optional[TransportationTypeEnum] = None
+    MonthlyTransportSpending: Optional[float] = Field(default=None, ge=0)
+    MonthlyUtilityBill: Optional[float] = Field(default=None, ge=0)
+    PriceIncreaseAlerts: Optional[bool] = None
+    BudgetThresholdAlerts: Optional[bool] = None
+    AlertThreshold: Optional[int] = Field(default=None, ge=1, le=100)
 
 class PreviousExpense(SQLModel):
     Month: str = Field(min_length=7, max_length=7, description="format: YYYY-MM")
@@ -162,7 +222,7 @@ class AllPreviousExpenses(SQLModel):
     @field_validator("AllExpenseRows")
     @classmethod
     def validate_unique_months(cls, value):
-        months = [e.month for e in value]
+        months = [e.Month for e in value]
         if len(months) != len(set(months)):
             raise ValueError("Duplicate months are not allowed.")
         return value
@@ -182,14 +242,17 @@ class PreviousExpenseDB(PreviousExpense, table=True):
         index=True
     )
     
-    Settings: Optional[UserSettings] = Relationship(back_populates="PreviousExpenses")
+    Settings: Optional["UserSettingsDB"] = Relationship(back_populates="PreviousExpenses")
 
-class FullSettingsResponse(UserSettings):
-    Id: int
-    UserId: int
-    CreatedAt: datetime
-    UpdatedAt: datetime
+class FullSettingsResponse(UserSettingsRead):
+    # Id: int
+    # UserId: int
+    # CreatedAt: datetime
+    # UpdatedAt: datetime
     PreviousExpenses: list[PreviousExpense] = []
+
+class QuickSetupPayload(SQLModel):
+    MonthlyIncome: float
 
 
 
