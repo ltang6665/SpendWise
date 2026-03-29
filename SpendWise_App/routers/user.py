@@ -37,3 +37,11 @@ def register_user(user: UserCreate, db: SessionDependency):
 @router.delete("/delete")
 def delete_user_account():
     pass
+
+@router.put("/changepassword")
+def change_user_password():
+    pass
+
+@router.put("/modifyemail")
+def change_user_email():
+    pass

@@ -6,197 +6,160 @@ from email.policy import default
 import re
 from typing import Annotated, Optional
 from pydantic import EmailStr, field_validator
-from sqlmodel import Field, Relationship, SQLModel, text, AutoString
-from .utils import TransportationType as TransportationTypeEnum
+from sqlmodel import Field, Relationship, SQLModel, text, AutoString, Column, String, ARRAY
+from .utils import TransportationType
 
 
 class UserBase(SQLModel):
     # index=True tells SQLModel to ask the database to create an index
     # makes lookups and filters on it faster.
-    email: EmailStr = Field(unique=True, sa_type=AutoString, index=True) #auto string?????
-    active: bool | None = Field(default=True) # check if user is banned
+    Email: EmailStr = Field(unique=True, sa_type=AutoString, index=True) #auto string?????
+    Active: bool | None = Field(default=True) # check if user is banned
 
 class UserCreate(UserBase):
-    password: str  # plain password
+    Password: str  # plain password
 
 class RefreshToken(SQLModel):
     RefreshToken: str | None = Field(default=None)
 
 class UserDetails(UserBase, RefreshToken, table=True):
     __tablename__ = "user_details" # type: ignore
-    id: int | None = Field(default=None, primary_key=True)
+
+    Id: int | None = Field(default=None, primary_key=True)
+    HashedPassword: str = Field(index=True)
+    UserType: str = Field(default="user")
     CreatedAt: datetime = Field(
         default=None,
         sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")}
     )
-    HashedPassword: str = Field(index=True)
-    UserType: str = Field(default="user")
+    UpdatedAt: datetime = Field(
+        default=None,
+        sa_column_kwargs={
+            "server_default": text("CURRENT_TIMESTAMP"),
+            "onupdate": text("CURRENT_TIMESTAMP")
+        }
+    )
+    PreviousExpenses: list["PreviousExpenseDB"] = Relationship(back_populates="UserDetails")
+    AddedExpenses: list["ExpensesDB"] = Relationship(back_populates="UserDetails")
 
 # Annotated[UserResponse, Depends(get_current_active_user)] avoid returning iportant data --> use id to fetch from db?
 class UserResponse(UserBase):
-    id: int
+    UserId: int
 
 class Token(RefreshToken):
     AccessToken: str
     TokenType: str
     UserType: str
 
-
-""" class RefreshTokenDB(RefreshToken):
-    __tablename__ = "refresh_tokens" # type: ignore
-    id: int | None = Field(default=None, primary_key=True)
-    CreatedAt: datetime = Field(
-        default=None,
-        sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")}
-    )
- """
 class UserExpenses(SQLModel): 
-    type: str # change to enum
+    Type: str # change to enum
     ItemName: str 
     AmountSpent: float 
     DatePurchased: date
-    note: str | None = None
+    Note: str | None = None
 
 class ExpensesDB(UserExpenses, table=True):
     __tablename__ = "user_expenses" # type: ignore
-    # user_id relationship column?
-    id: int | None = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key = "user_details.id")
+
+    Id: int | None = Field(default=None, primary_key=True)
+    UserId: int = Field(foreign_key = "user_details.id", index=True)
     CreatedAt: datetime = Field(
         default=None,
         sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")}
     )
-
-class UserMonthly(SQLModel):
-    income: int
-    HouseholdSize: int
-    TransportType: str
-    TransportCost: int
-    utilities: int 
-
-class MonthlyDB(UserMonthly):
-    __tablename__ = "user_Monthly" # type: ignore
-    # user_id relationship column?
-    id: int | None = Field(default=None, primary_key=True)
-    CreatedAt: datetime = Field(
+    UpdatedAt: datetime = Field(
         default=None,
-        sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")}
+        sa_column_kwargs={
+            "server_default": text("CURRENT_TIMESTAMP"),
+            "onupdate": text("CURRENT_TIMESTAMP")
+        }
     )
+    UserDetails: "UserDetails" = Relationship(back_populates="AddedExpenses")
 
-class UserAlerts(SQLModel):
-    PriceIncrease: bool = False
-    BudgetThreshold: bool = False
-    AlertThreshold: int
-
-class AlertsDB(UserAlerts):
-    __tablename__ = "user_alerts" # type: ignore
-    # user_id relationship column?
-    id: int | None = Field(default=None, primary_key=True)
-    CreatedAt: datetime = Field(
-        default=None,
-        sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")}
-    )
-
+# for the budget page (add check to make sure addition makes sense? or do in method/route)
 class UserBudget(SQLModel):
     AutoBudget: bool = True
     TotalBudget: int
-    food: int
-    transport: int
-    utilities: int
-    entertainment: int
-    shopping: int
-    healthcare: int
+    Food: int
+    Transport: int
+    Utilities: int
+    Entertainment: int
+    Shopping: int
+    Healthcare: int
 
-class BudgetDB(UserBudget):
+class BudgetDB(UserBudget, table=True):
     __tablename__ = "user_budget" # type: ignore
-    # user_id relationship column?
-    id: int | None = Field(default=None, primary_key=True)
+
+    Id: int | None = Field(default=None, primary_key=True)
+    UserId: int = Field(foreign_key = "user_details.id", index=True)
     CreatedAt: datetime = Field(
         default=None,
         sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")}
     )
+    UpdatedAt: datetime = Field(
+        default=None,
+        sa_column_kwargs={
+            "server_default": text("CURRENT_TIMESTAMP"),
+            "onupdate": text("CURRENT_TIMESTAMP")
+        }
+    )
 
-class UserSettingsBase(SQLModel):
-    EmailOrPhone: Optional[str] = None
+class UserSettings(SQLModel):
     MonthlyIncome: float = Field(default=0.0, ge=0)
     HouseholdSize: int = Field(default=1, ge=1)
-    TransportationType: TransportationTypeEnum = Field(default=TransportationTypeEnum.public)
+    TransportationTypes: TransportationType = TransportationType.default
+    #TransportationTypes: list[str] = Field(sa_column=Column(ARRAY(String)))
     MonthlyTransportSpending: float = Field(default=0.0, ge=0)
     MonthlyUtilityBill: float = Field(default=0.0, ge=0)
     PriceIncreaseAlerts: bool = True
     BudgetThresholdAlerts: bool = True
     AlertThreshold: int = Field(default=80, ge=1, le=100)
 
-# class UserSettingsBase(SQLModel):
-#     UserId: int = Field(foreign_key="user_details.id", unique=True, index=True)
-#     EmailOrPhone: Optional[str] = None
-#     MonthlyIncome: float = Field(default=0.0, ge=0)
-#     HouseholdSize: int = Field(default=1, ge=1)
-#     TransportationType: TransportationTypeEnum = Field(default(TransportationTypeEnum.public))
-#     MonthlyTransportSpending: float = Field(default=0.0, ge=0)
-#     MonthlyUtilityBill: float = Field(default=0.0, ge=0)
-#     PriceIncreaseAlerts: bool = True
-#     BudgetThresholdAlerts: bool = True
-#     AlertThreshold: int = Field(default=80, ge=1, le=100)
-
-class UserSettingsDB(UserSettingsBase, table=True):
+class UserSettingsDB(UserSettings, table=True):
     __tablename__ = "user_settings"  # type: ignore
 
     id: int | None = Field(default=None, primary_key=True)
-
-    # link to user
-    UserId: int = Field(
-        foreign_key="user_details.id",
-        unique=True,
-        index=True
-    )
+    UserId: int = Field(foreign_key="user_details.id", index=True)
+    Email: EmailStr # same email used for account creation
+    SetupMode: str = "none" # "none" | "quick" | "detailed" | "skipped"
+    SetupCompleted: bool = False
 
     CreatedAt: datetime = Field(
         default=None,
         sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")}
     )
-
-    UpdatedAt: datetime | None = None
-
+    UpdatedAt: datetime = Field(
+        default=None,
+        sa_column_kwargs={
+            "server_default": text("CURRENT_TIMESTAMP"),
+            "onupdate": text("CURRENT_TIMESTAMP")
+        }
+    )
     PreviousExpenses: list["PreviousExpenseDB"] = Relationship(
         back_populates="Settings",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
 
-    SetupMode: str = Field(default="none")  
-    # "none" | "quick" | "detailed" | "skipped"
-
-    SetupCompleted: bool = Field(default=False)
-    
-
-
-class UserSettingsRead(SQLModel):
-    id: int
-    UserId: int
-    EmailOrPhone: Optional[str]
+class QuickSetup(SQLModel):
     MonthlyIncome: float
-    HouseholdSize: int
-    TransportationType: TransportationTypeEnum
-    MonthlyTransportSpending: float
-    MonthlyUtilityBill: float
-    PriceIncreaseAlerts: bool
-    BudgetThresholdAlerts: bool
-    AlertThreshold: int
-    SetupMode: str
-    SetupCompleted: bool
-    CreatedAt: datetime
-    UpdatedAt: datetime | None = None
+    Email: EmailStr
 
-class UserSettingsUpdate(SQLModel):
-    EmailOrPhone: Optional[str] = None
-    MonthlyIncome: Optional[float] = Field(default=None, ge=0)
-    HouseholdSize: Optional[int] = Field(default=None, ge=1)
-    TransportationType: Optional[TransportationTypeEnum] = None
-    MonthlyTransportSpending: Optional[float] = Field(default=None, ge=0)
-    MonthlyUtilityBill: Optional[float] = Field(default=None, ge=0)
-    PriceIncreaseAlerts: Optional[bool] = None
-    BudgetThresholdAlerts: Optional[bool] = None
-    AlertThreshold: Optional[int] = Field(default=None, ge=1, le=100)
+class UserSetup(SQLModel):
+    MonthlyIncome: float
+    HouseholdSize: int 
+    TransportationTypes: list[TransportationType] = Field(default_factory=list) # tells postgres it is storing a list unique to everybody
+    PriceIncreaseAlerts: bool = True
+    BudgetThresholdAlerts: bool = True
+    AlertThreshold: int = Field(default=80, ge=1, le=100)
+
+
+
+
+
+
+
+
+
 
 class PreviousExpense(SQLModel):
     Month: str = Field(min_length=7, max_length=7, description="format: YYYY-MM")
@@ -214,6 +177,23 @@ class PreviousExpense(SQLModel):
             raise ValueError("Month must be in YYYY-MM format.")
         return value
 
+class PreviousExpenseDB(PreviousExpense, table=True):
+    __tablename__ = "previous_expenses" # type: ignore
+    id: int | None = Field(default=None, primary_key=True)
+    UserId: int = Field(foreign_key = "user_details.id", index=True)
+    CreatedAt: datetime = Field(
+        default=None,
+        sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")}
+    )    
+    UpdatedAt: datetime = Field(
+        default=None,
+        sa_column_kwargs={
+            "server_default": text("CURRENT_TIMESTAMP"),
+            "onupdate": text("CURRENT_TIMESTAMP")
+        }
+    )
+    UserDetails: "UserDetails" = Relationship(back_populates="PreviousExpenses")
+
 class AllPreviousExpenses(SQLModel):
     AllExpenseRows: list[PreviousExpense]
 
@@ -225,33 +205,10 @@ class AllPreviousExpenses(SQLModel):
             raise ValueError("Duplicate months are not allowed.")
         return value
     
-class PreviousExpenseDB(PreviousExpense, table=True):
-    __tablename__ = "previous_expenses" # type: ignore
-    id: int | None = Field(default=None, primary_key=True)
-    CreatedAt: datetime = Field(
-        default=None,
-        sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")}
-    )    
-    #??
-    SettingsId: int = Field(
-        foreign_key="user_settings.id", 
-        ondelete="CASCADE", 
-        nullable=False, 
-        index=True
-    )
-    
-    Settings: Optional["UserSettingsDB"] = Relationship(back_populates="PreviousExpenses")
+class DeleteExpensesRequest(SQLModel):
+    expenses_ids: list[int]
 
-class FullSettingsResponse(UserSettingsRead):
-    # Id: int
-    # UserId: int
-    # CreatedAt: datetime
-    # UpdatedAt: datetime
-    PreviousExpenses: list[PreviousExpense] = []
 
-class QuickSetupPayload(SQLModel):
-    MonthlyIncome: float
-    EmailOrPhone: Optional[str] = None
 
 
 

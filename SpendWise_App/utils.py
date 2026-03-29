@@ -12,6 +12,23 @@ from datetime import date, timedelta
 from enum import Enum
 
 
+
+# ENUMS
+class TransportationType(str, Enum):
+    default = "default"
+    bus = "bus"
+    Train = "train"
+    bike = "bike"
+    walking = "walking"
+    electric = "electric"
+    hybrid = "hybrid"
+    gasoline = "gasoline"
+    taxi = "taxi"
+    privatehire = "privatehire"
+
+    # private = "private"
+
+
 password_hash = PasswordHash.recommended()
 
 DUMMY_HASH = password_hash.hash("dummypassword")
@@ -36,15 +53,6 @@ def verify_token(refresh_token:str, credentials_exception, SECRET_KEY, ALGORITHM
         raise credentials_exception
 
     return token_data
-
-# ENUMS
-class TransportationType(str, Enum):
-    public = "public"
-    bike = "bike"
-    electric = "electric"
-    normal= "normal"
-
-    # private = "private"
 
 # Time filter helper
 def get_date_filter(period: str) -> date | None:
