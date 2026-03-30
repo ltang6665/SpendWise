@@ -19,7 +19,7 @@ def get_expenses_by_category(
     period: str = Query(default="all_time")
 ):
     since = get_date_filter(period)
-    query = select(ExpensesDB).where(ExpensesDB.user_id == current_user.id)
+    query = select(ExpensesDB).where(ExpensesDB.UserId == current_user.id)
 
     if since:
         query = query.where(ExpensesDB.DatePurchased >= since)
@@ -48,7 +48,7 @@ def get_single_category(
     since = get_date_filter(period)
     query = (
         select(ExpensesDB)
-        .where(ExpensesDB.user_id == current_user.id)
+        .where(ExpensesDB.UserId == current_user.id)
         .where(func.lower(ExpensesDB.type) == category.lower())
     )
 
