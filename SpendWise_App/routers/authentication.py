@@ -29,10 +29,10 @@ async def login_for_access_token(
         )
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
-    access_token = create_access_token(data={"sub": user.email}, expires_delta=access_token_expires)
-    refresh_token = create_refresh_token(data={"sub": user.email})
+    access_token = create_access_token(data={"sub": user.Email}, expires_delta=access_token_expires)
+    refresh_token = create_refresh_token(data={"sub": user.Email})
 
-    statement = select(UserDetails).where(UserDetails.email == user.email)
+    statement = select(UserDetails).where(UserDetails.Email == user.Email)
     results = db.exec(statement)
     user_db = results.first()
 
@@ -84,7 +84,7 @@ async def refresh_access_token(
 
     token_data = verify_token(refresh_token, credentials_exception=credentials_exception, SECRET_KEY=SECRET_KEY, ALGORITHM=ALGORITHM)
 
-    user = get_user(db, email=token_data.sub)
+    user = get_user(db, Email=token_data.sub)
     if user is None:
         raise credentials_exception
 
@@ -94,7 +94,7 @@ async def refresh_access_token(
         raise credentials_exception
 
     # 4. Issue a brand new Access Token
-    token_data = TokenData(sub=user.email) #, UserType=user.UserType
+    token_data = TokenData(sub=user.Email) #, UserType=user.UserType
     new_access_token = create_access_token(data=token_data.model_dump())
 
     return {
