@@ -1,0 +1,5 @@
+SpendWise database migrations.
+
+Apply pending revisions from `SC2006 Shared project` with `alembic upgrade head`.
+Backend startup creates missing tables, but does not alter tables in an existing database.
+The Telegram account-linking revision clears any outstanding old link codes; users must generate a fresh code after the migration.

@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+Spendwise/
+tempCodeRunnerFile.py
+postman/
+**/.env
+**/.DS_Store
+**/.vscode/
+**/.idea/
+**/.venv/
+**/venv/
+**/.projectvenv/

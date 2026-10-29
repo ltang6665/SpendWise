@@ -1,0 +1,10 @@
+fastapi[all]
+pwdlib[argon2]
+sqlmodel
+psycopg[binary]
+PyJWT
+alembic
+requests
+apscheduler
+python-telegram-bot
+google-genai
